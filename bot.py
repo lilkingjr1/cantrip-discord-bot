@@ -1,8 +1,8 @@
 """bot.py
 
 Main Discord bot file
-Date: 04/04/2023
-Authors: David Wolfe
+Date: 04/14/2023
+Authors: David Wolfe, Scott Fisher
 Licensed under GNU GPLv3 - See LICENSE for more details.
 """
 
@@ -13,12 +13,18 @@ from datetime import datetime
 import inflect
 import discord
 from discord.ext import commands
+from simplemysql import SimpleMysql
 
 load_dotenv()
-VERSION = "0.0.1"
+VERSION = "0.0.2"
 AUTHORS = "Scott Fisher\nRichard Roa\nSinjin Serrano\nDavid Wolfe"
 TOKEN = str(os.getenv('DISCORD_TOKEN'))
 GUILD_ID = int(os.getenv('GUILD_ID'))
+DB_HOST = str(os.getenv('DB_HOST'))
+DB_PORT = str(os.getenv('DB_PORT'))
+DB_USER = str(os.getenv('DB_USER'))
+DB_PASSWORD = str(os.getenv('DB_PASSWORD'))
+DB_NAME = str(os.getenv('DB_NAME'))
 
 
 def get_datetime_str():
@@ -34,7 +40,18 @@ print("Cantrip Discord Bot\n"
       "This is free software, and you are welcome to redistribute it\n"
       "under certain conditions; see LICENSE file for details.\n")
 
-p = inflect.engine() # Setup Inflect engine
+# Setup Inflect engine
+p = inflect.engine()
+
+# Database Initialization
+db = SimpleMysql(
+    host=DB_HOST,
+    port=DB_PORT,
+    db=DB_NAME,
+    user=DB_USER,
+    passwd=DB_PASSWORD,
+    keep_alive=True
+)
 
 
 """Discord Bot -- Main
