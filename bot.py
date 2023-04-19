@@ -13,10 +13,11 @@ from datetime import datetime
 import inflect
 import discord
 from discord.ext import commands
+from cogs import CogCharacters
 from simplemysql import SimpleMysql
 
 load_dotenv()
-VERSION = "0.0.2"
+VERSION = "0.0.3"
 AUTHORS = "Scott Fisher\nRichard Roa\nSinjin Serrano\nDavid Wolfe"
 TOKEN = str(os.getenv('DISCORD_TOKEN'))
 GUILD_ID = int(os.getenv('GUILD_ID'))
@@ -69,7 +70,7 @@ activity = discord.Activity(type=discord.ActivityType.playing, name="D&D 5e")
 # Create the bot object
 bot = discord.Bot(intents=intents, activity=activity)
 # Add cogs to bot
-""" Future TODO """
+bot.add_cog(CogCharacters.CogCharacters(bot, db))
 
 @bot.event
 async def on_ready():
@@ -123,8 +124,11 @@ async def about(ctx):
         description=_description,
         color=discord.Colour.blue()
     )
-    _embed.set_author(name="Cantrip - An All-Purpose D&D Discord Bot", icon_url="https://cdn.discordapp.com/app-icons/1083520537017462824/6fc4107a9d1ddf3f164d48c26b56d324.png")
-    _embed.set_thumbnail(url="https://cdn.discordapp.com/app-icons/1083520537017462824/6fc4107a9d1ddf3f164d48c26b56d324.png")
+    _embed.set_author(
+        name="Cantrip - An All-Purpose D&D Discord Bot", 
+        icon_url="https://bitbucket.org/comp-350-2/cantrip-discord-bot/raw/a168d2e16fe99b7386af18d785bd5d001adbd9fb/icon.jpg"
+    )
+    _embed.set_thumbnail(url="https://bitbucket.org/comp-350-2/cantrip-discord-bot/raw/a168d2e16fe99b7386af18d785bd5d001adbd9fb/logo.jpg")
     # Construct string of bot commands for display
     _cmd_str = "```"
     for command in bot.commands:
