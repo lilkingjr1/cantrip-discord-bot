@@ -16,7 +16,7 @@ from discord.ext import commands
 from simplemysql import SimpleMysql
 
 load_dotenv()
-VERSION = "0.0.2"
+VERSION = "0.0.5"
 AUTHORS = "Scott Fisher\nRichard Roa\nSinjin Serrano\nDavid Wolfe"
 TOKEN = str(os.getenv('DISCORD_TOKEN'))
 GUILD_ID = int(os.getenv('GUILD_ID'))
