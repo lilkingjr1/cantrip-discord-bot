@@ -14,6 +14,7 @@ import inflect
 import discord
 from discord.ext import commands
 from cogs import CogCharacters
+from cogs import CogAttacks
 from simplemysql import SimpleMysql
 
 load_dotenv()
@@ -70,7 +71,11 @@ activity = discord.Activity(type=discord.ActivityType.playing, name="D&D 5e")
 # Create the bot object
 bot = discord.Bot(intents=intents, activity=activity)
 # Add cogs to bot
+<<<<<<< HEAD
+bot.add_cog(CogAttacks.CogAttacks(bot, db))
+=======
 bot.add_cog(CogCharacters.CogCharacters(bot, db))
+>>>>>>> f3ed8cac9560180031a94ea8cb25ef133ebfb30e
 
 @bot.event
 async def on_ready():
