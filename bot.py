@@ -13,6 +13,7 @@ from datetime import datetime
 import inflect
 import discord
 from discord.ext import commands
+from cogs import CogAttacks
 from simplemysql import SimpleMysql
 
 load_dotenv()
@@ -69,7 +70,7 @@ activity = discord.Activity(type=discord.ActivityType.playing, name="D&D 5e")
 # Create the bot object
 bot = discord.Bot(intents=intents, activity=activity)
 # Add cogs to bot
-""" Future TODO """
+bot.add_cog(CogAttacks.CogAttacks(bot, db))
 
 @bot.event
 async def on_ready():
