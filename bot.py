@@ -1,24 +1,24 @@
 """bot.py
 
 Main Discord bot file
-Date: 04/14/2023
+Date: 04/23/2023
 Authors: David Wolfe, Scott Fisher
 Licensed under GNU GPLv3 - See LICENSE for more details.
 """
 
 import os
-from dotenv import load_dotenv
-from datetime import datetime
-
 import inflect
 import discord
+from dotenv import load_dotenv
+from datetime import datetime
 from discord.ext import commands
+from cogs import CogRoll
 from cogs import CogCharacters
 from cogs import CogAttacks
 from simplemysql import SimpleMysql
 
 load_dotenv()
-VERSION = "0.0.4"
+VERSION = "0.0.5"
 AUTHORS = "Scott Fisher\nRichard Roa\nSinjin Serrano\nDavid Wolfe"
 TOKEN = str(os.getenv('DISCORD_TOKEN'))
 GUILD_ID = int(os.getenv('GUILD_ID'))
@@ -73,6 +73,7 @@ bot = discord.Bot(intents=intents, activity=activity)
 # Add cogs to bot
 bot.add_cog(CogAttacks.CogAttacks(bot, db))
 bot.add_cog(CogCharacters.CogCharacters(bot, db))
+bot.add_cog(CogRoll.CogRoll(bot, db))
 
 @bot.event
 async def on_ready():
