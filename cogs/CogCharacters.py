@@ -84,7 +84,7 @@ class CogCharacters(discord.Cog, guild_ids=[GUILD_ID]):
     def __init__(self, bot, db):
         self.bot = bot
         self.db = db
-        self.db.query("DROP TABLE characters") # DEBUGGING
+        #self.db.query("DROP TABLE characters") # DEBUGGING
         self.db.query(
             "CREATE TABLE IF NOT EXISTS characters ("
                 "cid INT AUTO_INCREMENT PRIMARY KEY, "
@@ -131,12 +131,12 @@ class CogCharacters(discord.Cog, guild_ids=[GUILD_ID]):
         name: discord.Option(str, description="Character name", max_length=255, required=True), 
         level: discord.Option(int, description="Character level", min_value=1, max_value=20, required=True), 
         initiative: discord.Option(int, description="Initiative modifier", min_value=-20, max_value=20, required=True), 
-        strength: discord.Option(int, description="Strength ability score", min_value=4, max_value=30, required=True), 
-        dexterity: discord.Option(int, description="Dexterity ability score", min_value=4, max_value=30, required=True), 
-        constitution: discord.Option(int, description="Constitution ability score", min_value=4, max_value=30, required=True), 
-        intelligence: discord.Option(int, description="Intelligence ability score", min_value=4, max_value=30, required=True), 
-        wisdom: discord.Option(int, description="Wisdom ability score", min_value=4, max_value=30, required=True), 
-        charisma: discord.Option(int, description="Charisma ability score", min_value=4, max_value=30, required=True), 
+        strength: discord.Option(int, description="Strength ability score", min_value=1, max_value=30, required=True), 
+        dexterity: discord.Option(int, description="Dexterity ability score", min_value=1, max_value=30, required=True), 
+        constitution: discord.Option(int, description="Constitution ability score", min_value=1, max_value=30, required=True), 
+        intelligence: discord.Option(int, description="Intelligence ability score", min_value=1, max_value=30, required=True), 
+        wisdom: discord.Option(int, description="Wisdom ability score", min_value=1, max_value=30, required=True), 
+        charisma: discord.Option(int, description="Charisma ability score", min_value=1, max_value=30, required=True), 
         proficiencies: discord.Option(str, description="Comma seperated list of skills you are proficient in (e.g. 'Acrobatics, Animal Handling')", max_length=255, required=False), 
         race: discord.Option(str, description="(Optional) Character's race", max_length=255, required=False), 
         c_class: discord.Option(str, name="class", description="(Optional) Character's class", max_length=255, required=False), 

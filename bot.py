@@ -18,7 +18,7 @@ from cogs import CogAttacks
 from simplemysql import SimpleMysql
 
 load_dotenv()
-VERSION = "0.0.3"
+VERSION = "0.0.4"
 AUTHORS = "Scott Fisher\nRichard Roa\nSinjin Serrano\nDavid Wolfe"
 TOKEN = str(os.getenv('DISCORD_TOKEN'))
 GUILD_ID = int(os.getenv('GUILD_ID'))
@@ -71,11 +71,8 @@ activity = discord.Activity(type=discord.ActivityType.playing, name="D&D 5e")
 # Create the bot object
 bot = discord.Bot(intents=intents, activity=activity)
 # Add cogs to bot
-<<<<<<< HEAD
 bot.add_cog(CogAttacks.CogAttacks(bot, db))
-=======
 bot.add_cog(CogCharacters.CogCharacters(bot, db))
->>>>>>> f3ed8cac9560180031a94ea8cb25ef133ebfb30e
 
 @bot.event
 async def on_ready():
