@@ -1,32 +1,30 @@
 """CogRoll.py
 
 Handles all commands associated with dice rolls and attacks.
-Date: 04/24/2023
+Date: 04/25/2023
 Authors: Scott Fisher, David Wolfe
 Licensed under GNU GPLv3 - See LICENSE for more details.
 """
 
-import os
 import random
+
 import discord
-from dotenv import load_dotenv
-from datetime import datetime
 from discord.ext import commands
 
-load_dotenv()
-GUILD_ID = int(os.getenv('GUILD_ID'))
 
-def get_datetime_str():
-    """Return a formatted datetime string for logging"""
-    _now = datetime.now()
-    return _now.strftime("%m/%d/%Y %H:%M:%S")
-
-
-class CogRoll(discord.Cog, guild_ids=[GUILD_ID]):
-    def __init__(self, bot, db):
+class CogRoll(discord.Cog):
+    def __init__(self, bot):
         self.bot = bot
-        self.db = db
-        print(f"{get_datetime_str()}: [Roll] Successfully loaded!")
+    
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        """Listener: On Cog Ready
+        
+        Runs when the cog is successfully cached within the Discord API.
+        """
+        print(f"{self.bot.get_datetime_str()}: [Roll] Successfully cached!")
+    
 
     @discord.slash_command(name='roll', description='Rolls 1 or more of the following dice: [d4, d6, d8, d10, d12, d20]')
     async def roll_dice(self, ctx, dice_spec: str):
@@ -60,4 +58,10 @@ class CogRoll(discord.Cog, guild_ids=[GUILD_ID]):
             await ctx.respond(f"You rolled {number_of_dice}d{dice_type}{modifier_str}: {dice_rolls} {operator} {modifier} = {total}")
         else:
             await ctx.respond('Invalid dice type. Available types: 4, 6, 8, 10, 12, 20', ephemeral=True)
+
+def setup(bot):
+    """Called by Pycord to setup the cog"""
+    cog = CogRoll(bot)
+    cog.guild_ids = [bot.guild_id]
+    bot.add_cog(cog)
           

@@ -1,24 +1,20 @@
 """CogCharacters.py
 
 Handles all commands associated with creating, retrieving, editing, and deleting player characters from the database.
-Date: 04/16/2023
+Date: 04/25/2023
 Authors: David Wolfe
 Licensed under GNU GPLv3 - See LICENSE for more details.
 """
 
-import os
 import re
-from dotenv import load_dotenv
 from datetime import datetime
 
 import discord
 from discord.ext import commands
 
-load_dotenv()
-GUILD_ID = int(os.getenv('GUILD_ID'))
 DEFAULT_PORTRAIT_URL = "https://bitbucket.org/comp-350-2/cantrip-discord-bot/raw/947ae7ddbb6e2396ee55864c991e5a2935331ee6/assets/default_portrait.png"
 MAX_CHARACTERS = 5
-CMD_COOLDOWN = 1 # Seconds
+CMD_COOLDOWN = 10 # Seconds
 CHARACTER_ATTRIBUTES = [
     "name", 
     "created", 
@@ -59,17 +55,12 @@ SKILL_STRINGS = (
 SKILLS = tuple(value.lower().replace(" ", "") for value in SKILL_STRINGS)
 
 
-def get_datetime_str():
-    """Return a formatted datetime string for logging"""
-    _now = datetime.now()
-    return _now.strftime("%m/%d/%Y %H:%M:%S")
-
 async def get_player_characters(ctx: discord.AutocompleteContext):
     """Autocomplete Context: Get player characters
     
     Returns array of character names a user owns.
     """
-    _dbEntries = ctx.cog.db.getAll(
+    _dbEntries = ctx.bot.db.getAll(
         "characters", 
         ["name"], 
         ("uid=%s", [ctx.interaction.user.id])
@@ -80,12 +71,11 @@ async def get_player_characters(ctx: discord.AutocompleteContext):
         return []
 
 
-class CogCharacters(discord.Cog, guild_ids=[GUILD_ID]):
-    def __init__(self, bot, db):
+class CogCharacters(discord.Cog):
+    def __init__(self, bot):
         self.bot = bot
-        self.db = db
-        #self.db.query("DROP TABLE characters") # DEBUGGING
-        self.db.query(
+        #self.bot.db.query("DROP TABLE characters") # DEBUGGING
+        self.bot.db.query(
             "CREATE TABLE IF NOT EXISTS characters ("
                 "cid INT AUTO_INCREMENT PRIMARY KEY, "
                 "uid BIGINT NOT NULL, "
@@ -111,9 +101,9 @@ class CogCharacters(discord.Cog, guild_ids=[GUILD_ID]):
     async def on_ready(self):
         """Listener: On Cog Ready
         
-        Runs when the cog is successfully loaded.
+        Runs when the cog is successfully cached within the Discord API.
         """
-        print(f"{get_datetime_str()}: [Characters] Successfully loaded!")
+        print(f"{self.bot.get_datetime_str()}: [Characters] Successfully cached!")
     
 
     """Slash Command Group: /character
@@ -169,7 +159,7 @@ class CogCharacters(discord.Cog, guild_ids=[GUILD_ID]):
                     _name = _name + ' Jr.'
                 _success_str = f':white_check_mark: Character "{_name}" has successfully been created!\n(You already had a character named {name}, so a next of kin was created)'
             
-            self.db.insert(
+            self.bot.db.insert(
                 "characters",
                 {"uid": ctx.author.id, 
                  "name": _name, 
@@ -208,7 +198,7 @@ class CogCharacters(discord.Cog, guild_ids=[GUILD_ID]):
         
         Displays basic info about the author's chosen player character publicly.
         """
-        _dbEntry = self.db.getOne(
+        _dbEntry = self.bot.db.getOne(
             "characters", 
             CHARACTER_ATTRIBUTES, 
             ("uid=%s and name=%s", [ctx.author.id, name])
@@ -261,7 +251,7 @@ class CogCharacters(discord.Cog, guild_ids=[GUILD_ID]):
         
         Deletes one of the author's chosen player characters, with confirmation button.
         """
-        _dbEntry = self.db.getOne(
+        _dbEntry = self.bot.db.getOne(
             "characters", 
             ["cid"], 
             ("uid=%s and name=%s", [ctx.author.id, name])
@@ -269,7 +259,7 @@ class CogCharacters(discord.Cog, guild_ids=[GUILD_ID]):
         if _dbEntry:
             await ctx.respond(
                 f'Are you absolutely sure you want to delete "{name}"?', 
-                view=self.DeleteCharacter(self.db, _dbEntry, name), 
+                view=self.DeleteCharacter(_dbEntry, name), 
                 ephemeral=True
             )
         else:
@@ -281,15 +271,14 @@ class CogCharacters(discord.Cog, guild_ids=[GUILD_ID]):
         Helper class.
         Displays verification button that will actually perform the character deletion.
         """
-        def __init__(self, db, dbEntry, name, *args, **kwargs):
+        def __init__(self, dbEntry, name, *args, **kwargs):
             super().__init__(*args, **kwargs)
-            self.db = db
             self.dbEntry = dbEntry
             self.name = name
         
         @discord.ui.button(label="Yes, I'm sure!", style=discord.ButtonStyle.danger, emoji="⚠")
         async def button_callback(self, button, interaction):
-            self.db.delete(
+            interaction.client.db.delete(
                 "characters", 
                 ("cid = %s", [self.dbEntry['cid']])
             )
@@ -297,3 +286,9 @@ class CogCharacters(discord.Cog, guild_ids=[GUILD_ID]):
                 content=f':white_check_mark: Character "{self.name}" has successfully been deleted!', 
                 view = None
             )
+
+def setup(bot):
+    """Called by Pycord to setup the cog"""
+    cog = CogCharacters(bot)
+    cog.guild_ids = [bot.guild_id]
+    bot.add_cog(cog)

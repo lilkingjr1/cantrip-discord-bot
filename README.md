@@ -16,6 +16,7 @@ ___
 
 - Python 3
 - PIP (should be included with Python)
+- MySQL-compatible server
 - Discord account with verified email (to access developer portal)
 
 ## Installation
@@ -53,7 +54,7 @@ cd /your/path/to/Cantrip-Discord-Bot
 
 ```bash
 python --version
-OR (depending on what's in your PATH)
+# OR (depending on what is in your PATH)
 python3 --version
 ```
 5. Install dependancies:
@@ -83,9 +84,9 @@ The `.env` file can be used to configure the bot, or standard OS environment var
 
 Start with:
 ```bash
-python bot.py
-OR (depending on what's in your PATH)
-python3 bot.py
+python main.py
+# OR (depending on what is in your PATH)
+python3 main.py
 ```
 
 ## Usage & Commands
@@ -94,6 +95,9 @@ python3 bot.py
 
 | Command | Description |
 |---------|-------------|
+| `/roll` | Perform various dice rolls. |
+| `/character` | (Group) Contains various commands to create, view, edit, and delete player characters. |
+| `/attack` | (Group) Contains various commands to create, view, edit, and delete player attacks. |
 | `/about` | Displays information about the bot. |
 | `/shutdown` | Cleanly shuts down the bot (only members with the Administrator permission can do this). |
 

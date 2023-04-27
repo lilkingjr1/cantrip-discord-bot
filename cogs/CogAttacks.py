@@ -1,20 +1,13 @@
 """CogAttacks.py
 
 Handles all attacks associated with player characters from the database.
-Date: 04/18/2023
+Date: 04/25/2023
 Authors: David Wolfe, Scott Fisher, Sinjin Serrano
 Licensed under GNU GPLv3 - See LICENSE for more details.
 """
 
-import os
-from dotenv import load_dotenv
-from datetime import datetime
-
 import discord
 from discord.ext import commands
-
-load_dotenv()
-GUILD_ID = int(os.getenv('GUILD_ID'))
 
 ATTRIBUTES = [
     'Strength',
@@ -25,17 +18,12 @@ ATTRIBUTES = [
     'Charisma'
 ]
 
-def get_datetime_str():
-    """Return a formatted datetime string for logging"""
-    _now = datetime.now()
-    return _now.strftime("%m/%d/%Y %H:%M:%S")
-
 async def get_player_characters(ctx: discord.AutocompleteContext):
     """Autocomplete Context: Get player characters
     
     Returns array of character names a user owns.
     """
-    _dbEntries = ctx.cog.db.getAll(
+    _dbEntries = ctx.bot.db.getAll(
         "characters", 
         ["name"], 
         ("uid=%s", [ctx.interaction.user.id])
@@ -45,12 +33,11 @@ async def get_player_characters(ctx: discord.AutocompleteContext):
     else:
         return []
 
-class CogAttacks(discord.Cog, guild_ids=[GUILD_ID]):
-    def __init__(self, bot, db):
+class CogAttacks(discord.Cog):
+    def __init__(self, bot):
         self.bot = bot
-        self.db = db
-        #self.db.query("DROP TABLE characters") # DEBUGGING
-        self.db.query(
+        #self.bot.db.query("DROP TABLE characters") # DEBUGGING
+        self.bot.db.query(
             "CREATE TABLE IF NOT EXISTS attacks ("
                 "aid INT AUTO_INCREMENT PRIMARY KEY, "      # ID of attack in table 'attacks'
                 "owner_id INT, "                            # (foreign key) ID of attack's owner in table 'characters'
@@ -69,8 +56,11 @@ class CogAttacks(discord.Cog, guild_ids=[GUILD_ID]):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        """Listener: On Cog Ready"""
-        print(f"{get_datetime_str()}: [Attacks] Successfully loaded!")
+        """Listener: On Cog Ready
+        
+        Runs when the cog is successfully cached within the Discord API.
+        """
+        print(f"{self.bot.get_datetime_str()}: [Attacks] Successfully cached!")
 
     """Slash Command Group: /attack
     
@@ -104,7 +94,7 @@ class CogAttacks(discord.Cog, guild_ids=[GUILD_ID]):
         """
         await ctx.respond(
             "Creating {}: {}".format(character, name),
-            view=AttackView(self.db, character, name),
+            view=AttackView(character, name),
             ephemeral=True
         )
 
@@ -152,9 +142,8 @@ class DamageModal(discord.ui.Modal):
 class AttackView(discord.ui.View):
     """View for the attack type dropdown menu.
     """
-    def __init__(self, db, character='placeholder', name='placeholder'):
+    def __init__(self, character='placeholder', name='placeholder'):
         super().__init__()
-        self.db = db
         self.character = character
         self.name = name
         self.types = []
@@ -243,7 +232,7 @@ class AttackView(discord.ui.View):
         else:
             self.modifiers = self.input_modal.children[0].value
             self.damage_roll = self.input_modal.children[1].value
-        await self.insert_attack()
+        await self.insert_attack(interaction)
     
     def prompt_attack_type(self):
         self.dropdown.callback = self.type_callback
@@ -282,9 +271,9 @@ class AttackView(discord.ui.View):
             "damage_roll": self.damage_roll
         }
     
-    async def insert_attack(self):
+    async def insert_attack(self, interaction):
         data = self.return_data()
-        self.db.insert(
+        interaction.client.db.insert(
                 "attacks",
                 {"aid": 0, 
                  "owner_id": 0, #update with foreign key
@@ -297,3 +286,9 @@ class AttackView(discord.ui.View):
                  "modifiers": data['modifiers'],
                  "damage_roll": data['damage_roll']}
             )
+
+def setup(bot):
+    """Called by Pycord to setup the cog"""
+    cog = CogAttacks(bot)
+    cog.guild_ids = [bot.guild_id]
+    bot.add_cog(cog)
