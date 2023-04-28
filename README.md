@@ -1,6 +1,6 @@
 ![Cantrip - *An All-Purpose D&D Discord Bot*](logo.jpg)
 
-[![Bitbucket release (latest by date)](https://img.shields.io/badge/release-0.0.0-blue?logo=bitbucket)](https://bitbucket.org/comp-350-2/cantrip-discord-bot/src/master/) [![Python version](https://img.shields.io/badge/python-3.x.x-brightgreen?logo=python)](https://www.python.org/downloads/) ![Platform](https://img.shields.io/badge/platform-windows%20%7C%20linux-lightgrey) ![Hosting](https://img.shields.io/badge/hosting-self--hosted-blue) [![License](https://img.shields.io/badge/license-GNU%20GPLv3-green)](https://bitbucket.org/comp-350-2/cantrip-discord-bot/src/master/LICENSE)
+[![Bitbucket release (latest by date)](https://img.shields.io/badge/release-0.1.0-blue?logo=bitbucket)](https://bitbucket.org/comp-350-2/cantrip-discord-bot/src/master/) [![Python version](https://img.shields.io/badge/python-3.x.x-brightgreen?logo=python)](https://www.python.org/downloads/) ![Platform](https://img.shields.io/badge/platform-windows%20%7C%20linux-lightgrey) ![Hosting](https://img.shields.io/badge/hosting-self--hosted-blue) [![License](https://img.shields.io/badge/license-GNU%20GPLv3-green)](https://bitbucket.org/comp-350-2/cantrip-discord-bot/src/master/LICENSE)
 
 ___
 
@@ -90,8 +90,6 @@ python3 main.py
 ```
 
 ## Usage & Commands
-
-#TODO - Can be expanded on
 
 | Command | Description |
 |---------|-------------|
