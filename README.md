@@ -1,45 +1,104 @@
-**Edit a file, create a new file, and clone from Bitbucket in under 2 minutes**
+![Cantrip - *An All-Purpose D&D Discord Bot*](logo.jpg)
 
-When you're done, you can delete the content in this README and update the file with details for others getting started with your repository.
+[![Bitbucket release (latest by date)](https://img.shields.io/badge/release-0.0.0-blue?logo=bitbucket)](https://bitbucket.org/comp-350-2/cantrip-discord-bot/src/master/) [![Python version](https://img.shields.io/badge/python-3.x.x-brightgreen?logo=python)](https://www.python.org/downloads/) ![Platform](https://img.shields.io/badge/platform-windows%20%7C%20linux-lightgrey) ![Hosting](https://img.shields.io/badge/hosting-self--hosted-blue) [![License](https://img.shields.io/badge/license-GNU%20GPLv3-green)](https://bitbucket.org/comp-350-2/cantrip-discord-bot/src/master/LICENSE)
 
-*We recommend that you open this README in another tab as you perform the tasks below. You can [watch our video](https://youtu.be/0ocf7u76WSo) for a full demo of all the steps in this tutorial. Open the video in a new tab to avoid leaving Bitbucket.*
+___
 
----
+Cantrip is a self-hosted Discord bot, written in Python using the Pycord API, with the goal of making the
+popular tabletop game "Dungeons and Dragons 5th Edition" (D&D 5e) easier to organize and
+play by providing a suite of organizational and planning tools. With the helpful tools Cantrip
+provides, new and experienced players alike will find playing via Discord to be easier than ever
+before.
 
-## Edit a file
+___
 
-You’ll start by editing this README file to learn how to edit a file in Bitbucket.
+## Prerequisites
 
-1. Click **Source** on the left side.
-2. Click the README.md link from the list of files.
-3. Click the **Edit** button.
-4. Delete the following text: *Delete this line to make a change to the README from Bitbucket.*
-5. After making your change, click **Commit** and then **Commit** again in the dialog. The commit page will open and you’ll see the change you just made.
-6. Go back to the **Source** page.
+- Python 3
+- PIP (should be included with Python)
+- MySQL-compatible server
+- Discord account with verified email (to access developer portal)
 
----
+## Installation
 
-## Create a file
+### Creating a Discord Application for the Bot
 
-Next, you’ll add a new file to this repository.
+1. Go to Discord's [Developer Portal](http://discordapp.com/developers/applications) and log in.
+2. Click "New Application"
+3. Name it "Cantrip" (or honestly whatever you'd like).
+4. (Optional) Feel free to give it an App Icon (`icon.jpg` can be used) and Description of whatever you'd like. Click "Save Changes".
+5. Click the "Bot" tab on the left and click "Add Bot". Then click "Yes, do it!".
+6. Scroll down and turn on "SERVER MEMBERS INTENT" and "MESSAGE CONTENT INTENT". Click "Save Changes".
+7. Click the "OAuth2" tab on the left and click "URL Generator".
+8. Check these Scopes:
 
-1. Click the **New file** button at the top of the **Source** page.
-2. Give the file a filename of **contributors.txt**.
-3. Enter your name in the empty file space.
-4. Click **Commit** and then **Commit** again in the dialog.
-5. Go back to the **Source** page.
+![scopes](https://user-images.githubusercontent.com/4533989/215032768-fb2c4887-85cd-42fe-adaf-5927f17cb2a6.jpg)
 
-Before you move on, go ahead and explore the repository. You've already seen the **Source** page, but check out the **Commits**, **Branches**, and **Settings** pages.
+9. Check these Bot Permissions:
 
----
+![bot_permissions #TODO - Will need to be updated as development continues](https://user-images.githubusercontent.com/4533989/215032794-58778138-6889-4996-9965-4ecca7cf9ddb.jpg)
 
-## Clone a repository
+10. Copy the Generated URL, paste it into a new tab, and invite the bot to the Discord server of your choosing.
 
-Use these steps to clone from SourceTree, our client for using the repository command-line free. Cloning allows you to work on your files locally. If you don't yet have SourceTree, [download and install first](https://www.sourcetreeapp.com/). If you prefer to clone from the command line, see [Clone a repository](https://confluence.atlassian.com/x/4whODQ).
+### Installing the Bot
 
-1. You’ll see the clone button under the **Source** heading. Click that button.
-2. Now click **Check out in SourceTree**. You may need to create a SourceTree account or log in.
-3. When you see the **Clone New** dialog in SourceTree, update the destination path and name if you’d like to and then click **Clone**.
-4. Open the directory you just created to see your repository’s files.
+1. [Download the latest release](https://bitbucket.org/comp-350-2/cantrip-discord-bot/downloads/) and extract it (or `git clone` this repo), and place it wherever you'd like on the host.
+2. Rename `.env-sample` to `.env`
+3. Open command prompt or a terminal and navigate to the bot's folder:
 
-Now that you're more familiar with your Bitbucket repository, go ahead and add a new file locally. You can [push your change back to Bitbucket with SourceTree](https://confluence.atlassian.com/x/iqyBMg), or you can [add, commit,](https://confluence.atlassian.com/x/8QhODQ) and [push from the command line](https://confluence.atlassian.com/x/NQ0zDQ).
+```bash
+cd /your/path/to/Cantrip-Discord-Bot
+```
+
+4. Verify you have the right version of Python installed:
+
+```bash
+python --version
+# OR (depending on what is in your PATH)
+python3 --version
+```
+5. Install dependancies:
+```bash
+pip install -r requirements.txt
+```
+
+### Configure the Bot
+
+The `.env` file can be used to configure the bot, or standard OS environment variables can be used (if so, reference the `.env` file for variable names).
+1. Open `.env` with a text editor of your choice.
+2. Set the Discord Token
+    - Go to the Discord Developer Portal mentioned above
+    - Go to the Bot tab
+    - Click "Reset Token"
+    - Copy the token
+    - Replace `YOUR_DISCORD_TOKEN_HERE` with your token
+3. Set the various Discord IDs
+    - Open the Discord app
+    - Click on the settings cog in the bottom left corner
+    - Go to the Advanced tab and turn on "Developer Mode"
+    - Right click the Channel/User you need the ID for, and click "Copy ID"
+4. Set other settings according to their descriptions.
+5. Save the file.
+
+## Startup
+
+Start with:
+```bash
+python main.py
+# OR (depending on what is in your PATH)
+python3 main.py
+```
+
+## Usage & Commands
+
+#TODO - Can be expanded on
+
+| Command | Description |
+|---------|-------------|
+| `/roll` | Perform various dice rolls. |
+| `/character` | (Group) Contains various commands to create, view, edit, and delete player characters. |
+| `/attack` | (Group) Contains various commands to create, view, edit, and delete player attacks. |
+| `/about` | Displays information about the bot. |
+| `/shutdown` | Cleanly shuts down the bot (only members with the Administrator permission can do this). |
+
+The bot also responds positively to "good bot" remarks 🙂
