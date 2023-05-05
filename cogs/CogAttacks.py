@@ -1,13 +1,15 @@
 """CogAttacks.py
 
 Handles all attacks associated with player characters from the database.
-Date: 04/25/2023
+Date: 05/05/2023
 Authors: David Wolfe, Scott Fisher, Sinjin Serrano
 Licensed under GNU GPLv3 - See LICENSE for more details.
 """
 
 import discord
 from discord.ext import commands
+
+from cogs.CogCharacters import get_player_characters
 
 ATTRIBUTES = [
     'Strength',
@@ -18,31 +20,16 @@ ATTRIBUTES = [
     'Charisma'
 ]
 
-async def get_player_characters(ctx: discord.AutocompleteContext):
-    """Autocomplete Context: Get player characters
-    
-    Returns array of character names a user owns.
-    """
-    _dbEntries = ctx.bot.db.getAll(
-        "characters", 
-        ["name"], 
-        ("uid=%s", [ctx.interaction.user.id])
-    )
-    if _dbEntries:
-        return [character['name'] for character in _dbEntries]
-    else:
-        return []
-
 class CogAttacks(discord.Cog):
     def __init__(self, bot):
         self.bot = bot
-        #self.bot.db.query("DROP TABLE characters") # DEBUGGING
+        #self.bot.db.query("DROP TABLE attacks") # DEBUGGING
         self.bot.db.query(
             "CREATE TABLE IF NOT EXISTS attacks ("
                 "aid INT AUTO_INCREMENT PRIMARY KEY, "      # ID of attack in table 'attacks'
-                "owner_id INT, "                            # (foreign key) ID of attack's owner in table 'characters'
-                #"FOREIGN KEY (owner_id)"
-                #    "REFERENCES characters(owner_id), "
+                "cid INT NOT NULL, "                                 # (foreign key) ID of attack's owner in table 'characters'
+                #"FOREIGN KEY (cid)"
+                #    "REFERENCES characters(cid), "
                 "name TINYTEXT NOT NULL, "                  # name of attack
                 "attack_roll BOOL NOT NULL, "               # does that attack need an attack roll?
                 "saving_throw BOOL NOT NULL, "              # does the attack need a saving throw?
@@ -61,7 +48,8 @@ class CogAttacks(discord.Cog):
         Runs when the cog is successfully cached within the Discord API.
         """
         print(f"{self.bot.get_datetime_str()}: [Attacks] Successfully cached!")
-
+    
+    
     """Slash Command Group: /attack
     
     Commands for managing attacks. Having a character is a prerequisite for making attacks.
@@ -92,11 +80,19 @@ class CogAttacks(discord.Cog):
          - character: string of the attack's character (autocompleted)
          - name: string of the attack's name
         """
-        await ctx.respond(
-            "Creating {}: {}".format(character, name),
-            view=AttackView(character, name),
-            ephemeral=True
+        _dbEntry = self.bot.db.getOne(
+            "characters",
+            ["cid"],
+            ("uid=%s and name=%s", [ctx.author.id, character])
         )
+        if _dbEntry:
+            await ctx.respond(
+                "Creating {}: {}".format(character, name),
+                view=AttackView(_dbEntry['cid'], character, name),
+                ephemeral=True
+            )
+        else:
+            await ctx.respond(f'You do not have a character named "{character}"', ephemeral=True)
 
 class AttackTypeDropdown(discord.ui.Select):
     """Dropdown menu for the attack's type.
@@ -142,9 +138,10 @@ class DamageModal(discord.ui.Modal):
 class AttackView(discord.ui.View):
     """View for the attack type dropdown menu.
     """
-    def __init__(self, character='placeholder', name='placeholder'):
+    def __init__(self, cid, character='placeholder', name='placeholder'):
         super().__init__()
         self.character = character
+        self.cid = cid
         self.name = name
         self.types = []
         self.attr = ATTRIBUTES[0]   # attack's attribute
@@ -167,6 +164,8 @@ class AttackView(discord.ui.View):
         ]
         self.input_modal = DamageModal()
         self.prompt_attack_type()
+    
+    
     
     async def type_callback(self, interaction):
         self.dropdown.disabled = True
@@ -201,6 +200,8 @@ class AttackView(discord.ui.View):
         # Prompt Next Step
         if 'Saving Throw' in self.types:
             self.prompt_save_target()
+        else:
+            self.prompt_is_proficient()
         await interaction.response.edit_message(content="**Select attribute of saving throw.**", view=self)
     
     async def target_callback(self, interaction):
@@ -260,7 +261,7 @@ class AttackView(discord.ui.View):
     
     def return_data(self):
         return {
-            "character": self.character,
+            "character": self.cid,
             "name": self.name,
             "attack_roll": 'Attack Roll' in self.types,
             "saving_throw": 'Saving Throw' in self.types,
@@ -276,7 +277,7 @@ class AttackView(discord.ui.View):
         interaction.client.db.insert(
                 "attacks",
                 {"aid": 0, 
-                 "owner_id": 0, #update with foreign key
+                 "cid": int(data['character']),
                  "name": data['name'],
                  "attack_roll": int(data['attack_roll']), 
                  "saving_throw": int(data['saving_throw']),

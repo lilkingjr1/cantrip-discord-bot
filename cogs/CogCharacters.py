@@ -1,16 +1,19 @@
 """CogCharacters.py
 
 Handles all commands associated with creating, retrieving, editing, and deleting player characters from the database.
-Date: 04/25/2023
-Authors: David Wolfe
+Date: 05/05/2023
+Authors: David Wolfe, Sinjin Serrano
 Licensed under GNU GPLv3 - See LICENSE for more details.
 """
 
+import os
 import re
+import json
 from datetime import datetime
 
 import discord
 from discord.ext import commands
+
 
 DEFAULT_PORTRAIT_URL = "https://bitbucket.org/comp-350-2/cantrip-discord-bot/raw/947ae7ddbb6e2396ee55864c991e5a2935331ee6/assets/default_portrait.png"
 MAX_CHARACTERS = 5
@@ -51,8 +54,23 @@ SKILL_STRINGS = (
     "Stealth", 
     "Survival"
 )
+
+ATTACK_PROPERTIES = [
+    'aid',
+    'cid',
+    'name',
+    'attack_roll',
+    'saving_throw',
+    'attribute',
+    'target',
+    'proficient',
+    'modifiers',
+    'damage_roll'
+]
+
 # Create tuple from skill strings without capitals or spaces for functional calls
 SKILLS = tuple(value.lower().replace(" ", "") for value in SKILL_STRINGS)
+EXPORT_DEFAULT = 'export.json'
 
 
 async def get_player_characters(ctx: discord.AutocompleteContext):
@@ -286,7 +304,58 @@ class CogCharacters(discord.Cog):
                 content=f':white_check_mark: Character "{self.name}" has successfully been deleted!', 
                 view = None
             )
+    
+    @character.command(name = "export", description="Export one of your player characters in JSON format.")
+    @commands.cooldown(1, CMD_COOLDOWN, commands.BucketType.member)
+    async def export(
+        self,
+        ctx,
+        name: discord.Option(
+            str, 
+            autocomplete=discord.utils.basic_autocomplete(get_player_characters), 
+            description="Character name", 
+            max_length=255, 
+            required=True
+        )
+    ):
+        """Slash Command: /character export
 
+        Exports a character sheet in JSON format.
+        """
+        _dbEntry = self.bot.db.getOne(
+            "characters", 
+            ["cid"] + CHARACTER_ATTRIBUTES, 
+            ("uid=%s and name=%s", [ctx.author.id, name])
+        )
+        
+        _atkEntry = self.export_attacks(_dbEntry['cid'])
+
+        export = {
+            "character_sheet": _dbEntry,
+            "attacks_sheet": _atkEntry
+        }
+
+        # Generate JSON file
+        with open(EXPORT_DEFAULT, 'w') as file:
+            file.write(json.dumps(export, default=str, indent=4))
+        # please note: this converts date.datetime to a string: "2023-04-30" as an example
+        
+        # Upload generated file
+        await ctx.respond(file=discord.File(EXPORT_DEFAULT), ephemeral=True)
+
+        # Remove generated file
+        if os.path.exists(EXPORT_DEFAULT):
+            os.remove(EXPORT_DEFAULT)
+    
+    def export_attacks(self, cid):
+        """Returns a list of named tuples of this character's attacks.
+        """
+        attacks = self.bot.db.getAll("attacks",
+                                     ATTACK_PROPERTIES,
+                                     ("cid=%s", [cid])
+        )
+        return attacks
+        
 def setup(bot):
     """Called by Pycord to setup the cog"""
     cog = CogCharacters(bot)
