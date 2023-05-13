@@ -1,7 +1,7 @@
 """CogAttacks.py
 
 Handles all attacks associated with player characters from the database.
-Date: 05/05/2023
+Date: 05/12/2023
 Authors: David Wolfe, Scott Fisher, Sinjin Serrano
 Licensed under GNU GPLv3 - See LICENSE for more details.
 """
@@ -11,6 +11,12 @@ from discord.ext import commands
 
 from cogs.CogCharacters import get_player_characters
 
+from cogs.CogRoll import parse_roll
+from cogs.CogRoll import roll_dice
+from cogs.CogRoll import create_result_string
+
+from math import floor
+
 ATTRIBUTES = [
     'Strength',
     'Dexterity',
@@ -19,6 +25,48 @@ ATTRIBUTES = [
     'Wisdom',
     'Charisma'
 ]
+
+BASE_DC = 8
+PROF_INIT_BONUS = 2
+ABILITY_DEFAULT = 10
+BULLET_EMOJI = ':small_blue_diamond:'
+
+async def get_attacks(ctx: discord.AutocompleteContext):
+    """Autocomplete Context: Get attacks
+    
+    Returns array of attacks names a character owns.
+    """
+    cids = ctx.bot.db.getAll(
+        "characters", 
+        ["cid"], 
+        ("uid=%s", [ctx.interaction.user.id])
+    )
+    if cids:
+        attacks = []
+        for cid in cids:
+            attacks.append(ctx.bot.db.getAll(
+                "attacks",
+                ["name"],
+                ("cid=%s", [cid['cid']]))
+        )
+        if attacks:
+            return [attack['name'] for attack in attacks[0]]
+        else:
+            return []
+    else:
+        return []
+
+def calc_proficiency_bonus(char_level, modifiers=0):
+    """Calculates a character's proficiency bonus based off their level.
+    """
+    if char_level < 1:
+        return 0 + modifiers
+    return floor((char_level - 1) / 4) + PROF_INIT_BONUS + modifiers
+
+def calc_ability_modifier(ability_score, modifiers=0):
+    """Calculates a character's ability modifier off their ability score.
+    """
+    return floor((ability_score - ABILITY_DEFAULT) / 2) + modifiers
 
 class CogAttacks(discord.Cog):
     def __init__(self, bot):
@@ -93,6 +141,226 @@ class CogAttacks(discord.Cog):
             )
         else:
             await ctx.respond(f'You do not have a character named "{character}"', ephemeral=True)
+    
+    @attack.command(name = "delete", description="Delete a character's attack.")
+    async def create(
+        self,
+        ctx,
+        character: discord.Option(
+            str,
+            autocomplete=discord.utils.basic_autocomplete(get_player_characters),
+            description="Which character's attack are you deleting?",
+            max_length=255,
+            required=True
+        ),
+        name: discord.Option(
+            str,
+            autocomplete=discord.utils.basic_autocomplete(get_attacks),
+            description="Name of the attack you are deleting.",
+            max_length=255,
+            required=True
+        )
+    ):
+        """Slash Command: /attack delete
+        
+        Delete's specified attack.
+         - character: string of the attack's character (autocompleted)
+         - name: string of the attack's name (autocompleted)
+        """
+        _cid = self.bot.db.getOne(
+            "characters",
+            ["cid"],
+            ("uid=%s and name=%s", [ctx.author.id, character])
+        )
+        if _cid:
+            self.bot.db.delete(
+                "attacks",
+                ("cid=%s and name=%s", [_cid['cid'], name])
+            )
+            await ctx.respond("Deleted {}'s {}!".format(character, name), ephemeral=True)
+        else:
+            await ctx.respond("Something went wrong.", ephemeral=True)
+    
+    @attack.command(name = "list", description="Displays a list of a character's attacks.")
+    async def create(
+        self,
+        ctx,
+        character: discord.Option(
+            str,
+            autocomplete=discord.utils.basic_autocomplete(get_player_characters),
+            description="Which character's attacks are you viewing?",
+            max_length=255,
+            required=True
+        ),
+    ):
+        """Slash Command: /attack list
+        
+        Lists a character's attacks.
+         - character: string of the character(autocompleted)
+        """
+        _cid = self.bot.db.getOne(
+            "characters",
+            ["cid"],
+            ("uid=%s and name=%s", [ctx.author.id, character])
+        )
+        if _cid:
+            _attacks = self.bot.db.getAll(
+                "attacks",
+                ["name"],
+                ("cid=%s", [_cid['cid']])
+            )
+            if _attacks:
+                output = "**{}'s attacks:**\n>>> ".format(character)
+                _attacks_sorted = sorted(_attacks, key=lambda x: x['name'])
+                for atk in _attacks_sorted:
+                    output += BULLET_EMOJI + ' ' + atk['name'] + '\n'
+                await ctx.respond(output, ephemeral=True)
+            else:
+                await ctx.respond("{} does not have any attacks!".format(character), ephemeral=True)
+        else:
+            await ctx.respond("Something went wrong.", ephemeral=True)
+
+    @attack.command(name = "view", description="Displays a character's attack.")
+    async def create(
+        self,
+        ctx,
+        character: discord.Option(
+            str,
+            autocomplete=discord.utils.basic_autocomplete(get_player_characters),
+            description="Which character's attacks are you viewing?",
+            max_length=255,
+            required=True
+        ),
+        name: discord.Option(
+            str,
+            autocomplete=discord.utils.basic_autocomplete(get_attacks),
+            description="Which attack are you viewing?.",
+            max_length=255,
+            required=True
+        ),
+        public: discord.Option(
+            bool,
+            description="Make attack visible to everyone?",
+            required=False
+        )
+    ):
+        """Slash Command: /attack view
+        
+        Displays a character's attack.
+         - character: string of the character(autocompleted)
+         - name: string of the attack name
+         - public: bool; if message is ephemeral or not (not required)
+        """
+        _cid = self.bot.db.getOne(
+            "characters",
+            ["cid", "portrait", "level", "strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"],
+            ("uid=%s and name=%s", [ctx.author.id, character])
+        )
+        if _cid:
+            _attack = self.bot.db.getOne(
+                "attacks",
+                ["name", "attack_roll", "saving_throw", "attribute", "target", "proficient", "modifiers", "damage_roll"],
+                ("cid=%s and name=%s", [_cid['cid'], name])
+            )
+            if _attack:
+                # Create nice pretty embed
+                embed = discord.Embed(
+                    title =_attack['name'],
+                    color = discord.Color.blurple()
+                )
+
+                embed.add_field(name='**Damage Roll**', value=_attack['damage_roll'])
+
+                if _attack['attack_roll']:
+                    ability_modifier = calc_ability_modifier(_cid[_attack['attribute'].lower()])
+                    prof_bonus = calc_proficiency_bonus(_cid['level']) * _attack['proficient']
+                    attack_bonus = _attack['modifiers']
+
+                    total_bonus = ability_modifier + prof_bonus + attack_bonus
+
+                    details = '-' if ability_modifier < 0 else '+'
+                    details += "{:<2}, {:>24}\n".format(ability_modifier, '*' + _attack['attribute'] + ' modifier*')
+                    if _attack['proficient']:
+                        details += '+' if prof_bonus >= 0 else ''
+                        details += "{:<2}, {:>24}\n".format(prof_bonus, '*proficiency bonus*')
+                    if attack_bonus != 0:
+                        details += '+' if attack_bonus >= 0 else ''
+                        details += "{:<2}, {:>24}\n".format(attack_bonus, '*innate modifiers*')
+
+                    embed.add_field(name="**Attack Roll ({}) Bonus: {}**".format(_attack['attribute'], total_bonus), value=details)
+                if _attack['saving_throw']:
+                    ability_modifier = calc_ability_modifier(_cid[_attack['attribute'].lower()])
+                    prof_bonus = calc_proficiency_bonus(_cid['level']) * _attack['proficient']
+                    attack_bonus = _attack['modifiers']
+
+                    save_dc = ability_modifier + prof_bonus + attack_bonus + BASE_DC
+
+                    details = '-' if ability_modifier < 0 else '+'
+                    details += "{:<2}, {:>24}\n".format(ability_modifier, '*' + _attack['attribute'] + ' modifier*')
+                    if _attack['proficient']:
+                        details += '-' if prof_bonus < 0 else '+'
+                        details += "{:<2}, {:>24}\n".format(prof_bonus, '*proficiency bonus*')
+                    if attack_bonus != 0:
+                        details += '-' if attack_bonus < 0 else '+'
+                        details += "{:<2}, {:>24}\n".format(attack_bonus, '*innate modifiers*')
+                    
+                    embed.add_field(name="**Save DC ({}): {}**".format(_attack['target'], save_dc), value=details)
+
+                # Extra info
+                embed.set_author(name='{}'.format(character), icon_url=(_cid['portrait']))
+
+                await ctx.respond(embed=embed, ephemeral=(public is not True))
+            else:
+                await ctx.respond("Attack not found.")
+        else:
+            await ctx.respond("Something went wrong.")
+
+    @attack.command(name = "roll", description="Displays a character's attack.")
+    async def create(
+        self,
+        ctx,
+        character: discord.Option(
+            str,
+            autocomplete=discord.utils.basic_autocomplete(get_player_characters),
+            description="Which character's attacks are you viewing?",
+            max_length=255,
+            required=True
+        ),
+        name: discord.Option(
+            str,
+            autocomplete=discord.utils.basic_autocomplete(get_attacks),
+            description="Which attack are you viewing?.",
+            max_length=255,
+            required=True
+        )
+    ):
+        """Slash Command: /attack roll
+        
+        Rolls a character's attack.
+         - character: string of the character(autocompleted)
+         - name: string of the attack name
+        """
+        _cid = self.bot.db.getOne(
+            "characters",
+            ["cid", "portrait", "level", "strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"],
+            ("uid=%s and name=%s", [ctx.author.id, character])
+        )
+        if _cid:
+            _attack = self.bot.db.getOne(
+                "attacks",
+                ["name", "attack_roll", "saving_throw", "attribute", "target", "proficient", "modifiers", "damage_roll"],
+                ("cid=%s and name=%s", [_cid['cid'], name])
+            )
+            if _attack:
+                init_content = "{} uses {}!".format(character, name)
+                await ctx.respond(
+                init_content,
+                view=AttackConfirmView(_cid, _attack, init_content)
+            )
+            else:
+                await ctx.respond("Attack not found.")
+        else:
+            await ctx.respond("Something went wrong.")
 
 class AttackTypeDropdown(discord.ui.Select):
     """Dropdown menu for the attack's type.
@@ -131,12 +399,12 @@ class DamageModal(discord.ui.Modal):
     
     def initialize(self, neither=True):
         if not neither:
-            self.add_item(discord.ui.InputText(label="ATTACK ROLL / SAVE DC MODIFIERS"))
+            self.add_item(discord.ui.InputText(label="ATTACK ROLL MODIFIERS / SAVE DC MODIFIERS"))
         self.add_item(discord.ui.InputText(label="DAMAGE ROLL"))
 
 
 class AttackView(discord.ui.View):
-    """View for the attack type dropdown menu.
+    """View for the attack creation user interface.
     """
     def __init__(self, cid, character='placeholder', name='placeholder'):
         super().__init__()
@@ -155,7 +423,8 @@ class AttackView(discord.ui.View):
             for attr in ATTRIBUTES if attr != 'Constitution'
         ]
         self.target_buttons = [
-            AttrButton(label=attr, style=discord.ButtonStyle.primary, custom_id=(attr + '_target'), row=None)
+            AttrButton(label=attr, style=discord.ButtonStyle.primary, custom_id=(attr + '_target'),
+            row=floor(ATTRIBUTES.index(attr) / 3) + 2)
             for attr in ATTRIBUTES
         ]
         self.confirm_buttons = [
@@ -186,9 +455,11 @@ class AttackView(discord.ui.View):
             self.dropdown.placeholder="you shouldn't see this"
         if "Neither" not in self.types:
             self.prompt_attack_attr()
+            await interaction.response.edit_message(content="**Select the attack's attribute. (Ability modifier added to attack roll.)**", view=self)
         else:
             self.prompt_is_proficient()
-        await interaction.response.edit_message(content="**Select the attack's attribute.**", view=self)
+            await interaction.response.edit_message(content="**Are you proficient in this attack?**", view=self)
+        
 
     async def attr_callback(self, interaction):
         self.attr = interaction.custom_id
@@ -200,9 +471,11 @@ class AttackView(discord.ui.View):
         # Prompt Next Step
         if 'Saving Throw' in self.types:
             self.prompt_save_target()
+            await interaction.response.edit_message(content="**Select attribute of saving throw.**", view=self)
         else:
             self.prompt_is_proficient()
-        await interaction.response.edit_message(content="**Select attribute of saving throw.**", view=self)
+            await interaction.response.edit_message(content="**Are you proficient in this attack?**", view=self)
+        
     
     async def target_callback(self, interaction):
         self.target = interaction.custom_id[:-len('_target')]
@@ -287,6 +560,117 @@ class AttackView(discord.ui.View):
                  "modifiers": data['modifiers'],
                  "damage_roll": data['damage_roll']}
             )
+
+class AttackConfirmView(discord.ui.View):
+    """View for confirming if an attack roll hits and/or a saving throw is failed.
+    """
+    def __init__(self, character, attack, init_content='placeholder'):
+        super().__init__()
+        self._character = character # dictionary of character DB entry
+        self._attack = attack # dictionary of attack DB entry
+        self._roll_button = AttrButton(label='Roll attack!', style=discord.ButtonStyle.primary, custom_id='Attack')
+        self._attack_buttons = [
+            AttrButton(label='Yes', style=discord.ButtonStyle.primary, custom_id='aYes'),
+            AttrButton(label='No', style=discord.ButtonStyle.primary, custom_id='aNo')
+        ]
+        self._save_buttons = [
+            AttrButton(label='Yes', style=discord.ButtonStyle.primary, custom_id='Yes'),
+            AttrButton(label='No', style=discord.ButtonStyle.primary, custom_id='No')
+        ]
+        self._hit = False
+        self._failed = False
+        self._content = init_content
+        self.prompt_roll()
+        
+    
+    async def roll_prompt_callback(self, interaction):
+        self.remove_item(self._roll_button)
+        if self._attack['attack_roll']:
+            self.prompt_attack_hit()
+            await self.show_attack(interaction)
+            
+        elif self._attack['saving_throw']:
+            self.prompt_save_failed()
+            await self.show_save(interaction)
+            
+        else:
+            await self.roll_damage(interaction)
+
+    async def show_attack(self, interaction):
+        ability_modifier = calc_ability_modifier(self._character[self._attack['attribute'].lower()])
+        prof_bonus = calc_proficiency_bonus(self._character['level']) * self._attack['proficient']
+        attack_bonus = self._attack['modifiers']
+        total_bonus = ability_modifier + prof_bonus + attack_bonus
+        rolls, total = roll_dice(1, 20, total_bonus)
+        total_bonus_str = '+' if total_bonus >= 0 else ''
+        total_bonus_str += str(total_bonus)
+        msg = create_result_string(rolls, total, 1, 20, total_bonus, total_bonus_str)
+        
+        msg += "\nDoes your attack hit?"
+        self._content += '\n' + msg
+        await interaction.response.edit_message(content=self._content, view=self)
+    
+    async def show_save(self, interaction):
+        ability_modifier = calc_ability_modifier(self._character[self._attack['attribute'].lower()])
+        prof_bonus = calc_proficiency_bonus(self._character['level']) * self._attack['proficient']
+        attack_bonus = self._attack['modifiers']
+        total_bonus = ability_modifier + prof_bonus + attack_bonus + BASE_DC
+        msg = "Did your target fail their saving throw? (**{} Save DC: {}**)".format(self._attack['target'], total_bonus)
+        self._content += '\n' + msg
+        await interaction.response.edit_message(content=self._content, view=self)
+
+    async def attack_hit_callback(self, interaction):
+        self._hit = interaction.custom_id == 'aYes'
+        # Disable all Yes/No buttons
+        for b in self._attack_buttons:
+            if 'a' + b.label == interaction.custom_id:
+                b.style = discord.ButtonStyle.success
+            b.disabled = True
+            self.remove_item(b)
+        if self._attack['saving_throw'] and self._hit:
+            self.prompt_save_failed()
+            await self.show_save(interaction)
+        elif self._hit:
+            await self.roll_damage(interaction)
+        else:
+            await self.failed_attack(interaction)
+    
+    async def save_failed_callback(self, interaction):
+        self._failed = interaction.custom_id == 'Yes'
+        # Disable all Yes/No buttons
+        for b in self._save_buttons:
+            if b.label == interaction.custom_id:
+                b.style = discord.ButtonStyle.success
+            b.disabled = True
+            self.remove_item(b)
+        if self._failed:
+            await self.roll_damage(interaction)
+        else:
+            await self.failed_attack(interaction)
+
+    def prompt_roll(self):
+        self._roll_button.callback = self.roll_prompt_callback
+        self.add_item(self._roll_button)
+
+    def prompt_attack_hit(self):
+        for b in self._attack_buttons:
+            b.callback = self.attack_hit_callback
+            self.add_item(b)
+    
+    def prompt_save_failed(self):
+        for b in self._save_buttons:
+            b.callback = self.save_failed_callback
+            self.add_item(b)
+    
+    async def roll_damage(self, interaction):
+        results = parse_roll([self._attack['damage_roll']])
+        self._content += '\n' + results[0]
+        await interaction.response.edit_message(content=self._content, view=self)
+    
+    async def failed_attack(self, interaction):
+        self._content += '\n' + 'D:' # TODO: add document of random failure text
+        await interaction.response.edit_message(content=self._content, view=self)
+
 
 def setup(bot):
     """Called by Pycord to setup the cog"""
