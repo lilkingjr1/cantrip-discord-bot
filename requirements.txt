@@ -1,3 +1,4 @@
-py-cord >= 2.3.2
-python-dotenv >= 0.21.0
+py-cord
+python-dotenv
+PyNaCl
 git+https://github.com/lilkingjr1/simplemysql
