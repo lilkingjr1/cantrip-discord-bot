@@ -9,6 +9,10 @@
 # Local raw logo art files
 logo/
 
+# Local music files
+audio/*
+!audio/*.txt
+
 # Python compiled bytecode and cache
 **/__pycache__/
 *.py[cod]
@@ -17,6 +21,9 @@ logo/
 
 # Log files
 *.log
+
+# Generated files
+export.json
 
 # Maven
 target/

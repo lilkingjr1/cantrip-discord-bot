@@ -1,7 +1,7 @@
 """main.py
 
 Main file to start Cantrip
-Date: 04/25/2023
+Date: 05/14/2023
 Authors: David Wolfe, Scott Fisher, Sinjin Serrano
 Licensed under GNU GPLv3 - See LICENSE for more details.
 """
@@ -19,17 +19,18 @@ from simplemysql import SimpleMysql
 def main():
     # Print copyright notice
     print("Cantrip Discord Bot\n"
-          "Copyright (c) 2023 Scott Fisher, Richard Roa, Sinjin Serrano, & David Wolfe\n"
+          "Copyright (c) 2023 Scott Fisher, Sinjin Serrano, & David Wolfe\n"
           "This program comes with ABSOLUTELY NO WARRANTY.\n"
           "This is free software, and you are welcome to redistribute it\n"
           "under certain conditions; see LICENSE file for details.\n")
     
-    VERSION = "0.1.0"
-    AUTHORS = "Scott Fisher\nRichard Roa\nSinjin Serrano\nDavid Wolfe"
+    VERSION = "1.0.0"
+    AUTHORS = "Scott Fisher\nSinjin Serrano\nDavid Wolfe"
     COGS_LIST = [
         "CogCharacters",
         "CogAttacks",
-        "CogRoll"
+        "CogRoll",
+        "CogAudio"
     ]
 
     # Load environment variables
@@ -56,6 +57,7 @@ def main():
             db=DB_NAME,
             user=DB_USER,
             passwd=DB_PASSWORD,
+            autocommit=True,
             keep_alive=True
         )
     except Exception as e:

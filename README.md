@@ -1,6 +1,6 @@
 ![Cantrip - *An All-Purpose D&D Discord Bot*](logo.jpg)
 
-[![Bitbucket release (latest by date)](https://img.shields.io/badge/release-0.1.0-blue?logo=bitbucket)](https://bitbucket.org/comp-350-2/cantrip-discord-bot/src/master/) [![Python version](https://img.shields.io/badge/python-3.x.x-brightgreen?logo=python)](https://www.python.org/downloads/) ![Platform](https://img.shields.io/badge/platform-windows%20%7C%20linux-lightgrey) ![Hosting](https://img.shields.io/badge/hosting-self--hosted-blue) [![License](https://img.shields.io/badge/license-GNU%20GPLv3-green)](https://bitbucket.org/comp-350-2/cantrip-discord-bot/src/master/LICENSE)
+[![Bitbucket release (latest by date)](https://img.shields.io/badge/release-1.0.0-blue?logo=bitbucket)](https://bitbucket.org/comp-350-2/cantrip-discord-bot/src/master/) [![Python version](https://img.shields.io/badge/python-3.x.x-brightgreen?logo=python)](https://www.python.org/downloads/) ![Platform](https://img.shields.io/badge/platform-windows%20%7C%20linux-lightgrey) ![Hosting](https://img.shields.io/badge/hosting-self--hosted-blue) [![License](https://img.shields.io/badge/license-GNU%20GPLv3-green)](https://bitbucket.org/comp-350-2/cantrip-discord-bot/src/master/LICENSE)
 
 ___
 
@@ -18,6 +18,7 @@ ___
 - PIP (should be included with Python)
 - MySQL-compatible server
 - Discord account with verified email (to access developer portal)
+- [Optional] `ffmpeg` (must be installed on OS to enable `/audio` commands - 500 MB install)
 
 ## Installation
 
@@ -32,11 +33,11 @@ ___
 7. Click the "OAuth2" tab on the left and click "URL Generator".
 8. Check these Scopes:
 
-![scopes](https://user-images.githubusercontent.com/4533989/215032768-fb2c4887-85cd-42fe-adaf-5927f17cb2a6.jpg)
+![scopes](assets/scopes.jpg)
 
 9. Check these Bot Permissions:
 
-![bot_permissions #TODO - Will need to be updated as development continues](https://user-images.githubusercontent.com/4533989/215032794-58778138-6889-4996-9965-4ecca7cf9ddb.jpg)
+![bot_permissions #TODO - Will need to be updated as development continues](assets/bot_permissions.jpg)
 
 10. Copy the Generated URL, paste it into a new tab, and invite the bot to the Discord server of your choosing.
 
@@ -65,6 +66,7 @@ pip install -r requirements.txt
 ### Configure the Bot
 
 The `.env` file can be used to configure the bot, or standard OS environment variables can be used (if so, reference the `.env` file for variable names).
+
 1. Open `.env` with a text editor of your choice.
 2. Set the Discord Token
     - Go to the Discord Developer Portal mentioned above
@@ -94,8 +96,9 @@ python3 main.py
 | Command | Description |
 |---------|-------------|
 | `/roll` | Perform various dice rolls. |
-| `/character` | (Group) Contains various commands to create, view, edit, and delete player characters. |
-| `/attack` | (Group) Contains various commands to create, view, edit, and delete player attacks. |
+| `/character` | [Group] Contains various commands to create, view, edit, and delete player characters. |
+| `/attack` | [Group] Contains various commands to create, view, edit, and delete player attacks. |
+| `/audio` | [Group] Contains various commands to play local audio files placed in the bot's `audio/` folder. (Requires `ffmpeg` to be installed) |
 | `/about` | Displays information about the bot. |
 | `/shutdown` | Cleanly shuts down the bot (only members with the Administrator permission can do this). |
 
